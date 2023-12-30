@@ -58,8 +58,8 @@ public class BookApiController {
 
     // 신규 등록 , 등록된 도서 정보 반환
     @PostMapping
-    public ResponseEntity<ResponseBookDto> createBook(@Valid CreateBookCommand requestDto) {
-        return ResponseEntity.ok(bookService.registerNewBook(requestDto));
+    public ResponseEntity<ResponseBookDto> createBook(@Valid CreateBookCommand command) {
+        return ResponseEntity.ok(bookService.registerNewBook(command));
     }
 
 
@@ -70,13 +70,17 @@ public class BookApiController {
         return ResponseEntity.ok(new CommonResponse());
     }
 
-    // 카테고리 변경
-    // 변경 하는 것에는 여러가지 방법이 있다.
-    // soft delete, hard delete, 전부 삭제하고 요청된 것 insert 하는 방식, 현재 있는 것과 비교해서 없는것만 insert하고 빠진거는 delete하는 방식
-    // 이 중에 고민했는데,
+    /*
+        카테고리 변경
+     변경 하는 것에는 여러가지 방법이 있다.방법이
+     soft delete, hard delete, 전부 삭제하고 요청된 것 insert 하는 방식, 현재 있는 것과 비교해서 없는것만 insert하고 빠진거는 delete하는 방식
+     이 중에 고민했는데, soft delete를 하기에는 부수적인 코드가 많이 사용될 것 같고, hard delete이긴한데, 전부 삭제하는건 나중에 이력이라도 쌓을때 문제가 된다.
+     그래서 있는 것과 비교하여 없는 것만 insert 하고, 빠진것은 delete 하는 방식으로 카테고리 변경을 진행하려고한다.
+     */
     @PutMapping("{bookId}/categories")
-    public ResponseEntity<ResponseBookDto> updateCategories(@PathVariable Long bookId, RequestBookDto requestDto) {
-
+    public ResponseEntity<CommonResponse> changeCategories(@PathVariable Long bookId, @Valid UpdateBookCategoryCommand command) {
+        bookService.changeCategories(bookId, command);
+        return ResponseEntity.ok(new CommonResponse());
     }
 
 
@@ -91,6 +95,17 @@ public class BookApiController {
         private String author;
 
         // id만 받아서 넣을지, category 자체(id, name)를 받아서 넣는지는 전자로 결정했다 치고
+        @Size(min = 1)
+        private List<Long> categoryIds = new ArrayList<>();
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public class UpdateBookCategoryCommand {
+        // 보통 삭제된 id list와 추가된 id list를 주는 것 같은데(내가 프론트면 그럴거같다)
+        // 근데 그냥 이렇게 바꿔달라고 list전체를 줄수도 있는 상황이기 떄문에.. 그때 마다 객체 멤버변수는 달라질 수 있다.
+        // 변경된 카테고리 ID list
         @Size(min = 1)
         private List<Long> categoryIds = new ArrayList<>();
     }
