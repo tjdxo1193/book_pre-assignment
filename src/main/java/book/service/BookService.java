@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -100,7 +98,7 @@ public class BookService {
         Book book = getBook(bookId);
 
         List<Category> afterCategoryList = categoryRepository.findAllById(command.getCategoryIds());
-        List<BookCategory> beforeCategoryList = bookCategoryRepository.findAllByBookId();
+        List<BookCategory> beforeCategoryList = bookCategoryRepository.findAllByBookId(bookId);
 
         if (beforeCategoryList.size() == 0) {
             log.info("BookCategoryList is Empty, bookId is %d.");
