@@ -12,7 +12,7 @@ import java.util.List;
 
 @Repository
 public interface BookCategoryRepository extends JpaRepository<BookCategory, Long> {
-    List<BookCategory> findAllByBookId();
+    List<BookCategory> findAllByBookId(Long bookId);
 
     @Query("select bc from BookCategory bc where bc.book = :book and bc.category not in :categories")
     List<BookCategory> findAllByBookIdAndNotInCategoryIds(@Param(value = "book") Book book, @Param(value= "categories") List<Category> categories);
