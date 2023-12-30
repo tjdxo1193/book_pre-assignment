@@ -9,6 +9,7 @@ import book.entity.Category;
 import book.enums.BookStatus;
 import book.exception.BookCategoryNotFoundException;
 import book.exception.BookNotFoundException;
+import book.exception.CategoryNotFoundException;
 import book.repository.BookCategoryRepository;
 import book.repository.BookRepository;
 import book.repository.CategoryRepository;
@@ -30,8 +31,9 @@ public class BookService {
     private final BookCategoryRepository bookCategoryRepository;
 
     public List<ResponseBookDto> getBooksByCategory(Long categoryId) {
-        return bookRepository.findAllByCategoryId(categoryId)
-                .stream()
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + categoryId));
+        List<Book> bookList = bookRepository.findAllByCategory(category);
+        return bookList.stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -63,6 +65,10 @@ public class BookService {
                         .build());
 
         List<Category> categories = categoryRepository.findAllById(requestDto.getCategoryIds());
+        if (categories.size() == 0) {
+            throw new CategoryNotFoundException("category is NotFound");
+        }
+
         List<BookCategory> bookCategories = new ArrayList<>();
         for (Category category : categories) {
             bookCategories.add(BookCategory.builder()
@@ -84,48 +90,35 @@ public class BookService {
                 .build();
     }
 
-    public ResponseBookDto toDto(Book book, List<Category> category) {
-        return ResponseBookDto.builder()
-                .bookId(book.getId())
-                .author(book.getAuthor())
-                .title(book.getTitle())
-                .categories(category)
-                .build();
-    }
-
     @Transactional
     public void changeCategories(Long bookId, BookApiController.UpdateBookCategoryCommand command) {
         Book book = getBook(bookId);
 
         List<Category> afterCategoryList = categoryRepository.findAllById(command.getCategoryIds());
-        List<BookCategory> beforeCategoryList = bookCategoryRepository.findAllByBookId(bookId);
+        List<BookCategory> beforeCategoryList = bookCategoryRepository.findAllByBook(book);
 
-        if (beforeCategoryList.size() == 0) {
-            log.info("BookCategoryList is Empty, bookId is %d.");
+        if (beforeCategoryList.isEmpty()) {
+            log.debug("BookCategoryList is Empty, bookId is {}.", bookId);
             throw new BookCategoryNotFoundException("book category is Empty. Category Not Found");
         }
 
-        List<Long> commonCategoryIds = new ArrayList<>();
-        for (int i = 0; i < afterCategoryList.size(); i++) {
-            for (int j = 0; j < beforeCategoryList.size(); j++) {
-                if (beforeCategoryList.get(j).getId() == afterCategoryList.get(i).getId()) {
-                    commonCategoryIds.add(beforeCategoryList.get(j).getId());
-                }
-            }
-        }
+        List<Long> commonCategoryIds = afterCategoryList.stream()
+                .map(Category::getId)
+                .filter(categoryId -> beforeCategoryList.stream()
+                        .anyMatch(bookCategory -> bookCategory.getCategory().getId().equals(categoryId)))
+                .toList();
 
-        List<Category> commonCategories = categoryRepository.findAllById(commonCategoryIds);
-        List<BookCategory> deleteBookCategories = bookCategoryRepository.findAllByBookIdAndNotInCategoryIds(book, commonCategories);
-        List<BookCategory> insertBookCategories = new ArrayList<>();
+        List<BookCategory> deleteBookCategories = beforeCategoryList.stream()
+                .filter(bookCategory -> !commonCategoryIds.contains(bookCategory.getCategory().getId()))
+                .toList();
 
-        for (Category category : afterCategoryList) {
-            if(commonCategoryIds.contains(category.getId())){
-                insertBookCategories.add(BookCategory.builder()
+        List<BookCategory> insertBookCategories = afterCategoryList.stream()
+                .filter(category -> !commonCategoryIds.contains(category.getId()))
+                .map(category -> BookCategory.builder()
                         .book(book)
                         .category(category)
-                        .build());
-            }
-        }
+                        .build())
+                .toList();
 
         bookCategoryRepository.deleteAll(deleteBookCategories);
         bookCategoryRepository.saveAll(insertBookCategories);

@@ -8,13 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface BookCategoryRepository extends JpaRepository<BookCategory, Long> {
-    List<BookCategory> findAllByBookId(Long bookId);
+    @Query("select bc from BookCategory bc where bc.book = :book")
+    List<BookCategory> findAllByBook(@Param(value = "book") Book book);
 
-    @Query("select bc from BookCategory bc where bc.book = :book and bc.category not in :categories")
-    List<BookCategory> findAllByBookIdAndNotInCategoryIds(@Param(value = "book") Book book, @Param(value= "categories") List<Category> categories);
+    List<BookCategory> findAllByBookIdAndCategoryNotIn(Long book_id, Collection<Category> category);
 
 }

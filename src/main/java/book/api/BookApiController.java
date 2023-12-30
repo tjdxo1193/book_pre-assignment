@@ -8,6 +8,7 @@ import book.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class BookApiController {
 
     @Operation(summary = "신규 등록 , 등록된 도서 정보 반환")
     @PostMapping
-    public ResponseEntity<ResponseBookDto> createBook(@Valid CreateBookCommand command) {
+    public ResponseEntity<ResponseBookDto> createBook(@RequestBody @Valid CreateBookCommand command) {
         return ResponseEntity.ok(bookService.registerNewBook(command));
     }
 
@@ -80,31 +81,31 @@ public class BookApiController {
      */
     @Operation(summary = "카테고리 변경")
     @PutMapping("{bookId}/categories")
-    public ResponseEntity<CommonResponse> changeCategories(@PathVariable Long bookId, @Valid UpdateBookCategoryCommand command) {
+    public ResponseEntity<CommonResponse> changeCategories(@PathVariable Long bookId, @RequestBody @Valid UpdateBookCategoryCommand command) {
         bookService.changeCategories(bookId, command);
         return ResponseEntity.ok(new CommonResponse());
     }
 
 
-    @Data
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
-    @NoArgsConstructor
-    public
-    class CreateBookCommand {
-        @NonNull
+    @Getter
+    @Setter
+    public static class CreateBookCommand {
+        @NotNull
         private String title;
-        @NonNull
+        @NotNull
         private String author;
-
         // id만 받아서 넣을지, category 자체(id, name)를 받아서 넣는지는 전자로 결정했다 치고
         @Size(min = 1)
         private List<Long> categoryIds = new ArrayList<>();
     }
 
-    @Data
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
-    @NoArgsConstructor
-    public class UpdateBookCategoryCommand {
+    @Getter
+    @Setter
+    public static class UpdateBookCategoryCommand {
         // 보통 삭제된 id list와 추가된 id list를 주는 것 같은데(내가 프론트면 그럴거같다)
         // 근데 그냥 이렇게 바꿔달라고 list전체를 줄수도 있는 상황이기 떄문에.. 그때 마다 객체 멤버변수는 달라질 수 있다.
         // 변경된 카테고리 ID list
