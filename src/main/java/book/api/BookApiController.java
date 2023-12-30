@@ -3,9 +3,10 @@ package book.api;
 import book.common.CommonResponse;
 import book.dto.RequestBookDto;
 import book.dto.ResponseBookDto;
-import book.entity.Book;
 import book.enums.BookStatus;
 import book.service.BookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@Tag(name = "Book API")
 @RestController
 @RequestMapping("/books")
 @RequiredArgsConstructor
@@ -42,28 +43,28 @@ public class BookApiController {
 - 현재 서점에 있는 도서 목록은 다음과 같다.
      */
 
-    // 카테고리 별로 검색
+    @Operation(summary = "카테고리 별로 검색")
     @GetMapping("/by-category/{categoryId}")
     public ResponseEntity<List<ResponseBookDto>> getBooksByCategory(@PathVariable Long categoryId) {
         List<ResponseBookDto> books = bookService.getBooksByCategory(categoryId);
         return ResponseEntity.ok(books);
     }
 
-    // 제목 및 지은이로 검색
+    @Operation(summary = "제목 및 지은이로 검색")
     @GetMapping("/by-author-and-title")
     public ResponseEntity<List<ResponseBookDto>> getBooksByAuthorAndTitle(RequestBookDto requestDto) {
         List<ResponseBookDto> books = bookService.getBooksByAuthorAndTitle(requestDto);
         return ResponseEntity.ok(books);
     }
 
-    // 신규 등록 , 등록된 도서 정보 반환
+    @Operation(summary = "신규 등록 , 등록된 도서 정보 반환")
     @PostMapping
     public ResponseEntity<ResponseBookDto> createBook(@Valid CreateBookCommand command) {
         return ResponseEntity.ok(bookService.registerNewBook(command));
     }
 
 
-    // 중단 or 활성화
+    @Operation(summary = "도서 대여 중단, 활성화")
     @PatchMapping("/{bookId}/changeStatus/{status}")
     public ResponseEntity<CommonResponse> changeBookStatus(@PathVariable Long bookId, @PathVariable BookStatus status) {
         bookService.changeBookStatus(bookId, status);
@@ -77,6 +78,7 @@ public class BookApiController {
      이 중에 고민했는데, soft delete를 하기에는 부수적인 코드가 많이 사용될 것 같고, hard delete이긴한데, 전부 삭제하는건 나중에 이력이라도 쌓을때 문제가 된다.
      그래서 있는 것과 비교하여 없는 것만 insert 하고, 빠진것은 delete 하는 방식으로 카테고리 변경을 진행하려고한다.
      */
+    @Operation(summary = "카테고리 변경")
     @PutMapping("{bookId}/categories")
     public ResponseEntity<CommonResponse> changeCategories(@PathVariable Long bookId, @Valid UpdateBookCategoryCommand command) {
         bookService.changeCategories(bookId, command);
