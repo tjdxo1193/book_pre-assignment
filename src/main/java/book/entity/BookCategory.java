@@ -1,15 +1,25 @@
 package book.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+
 @Entity
 @Table(name = "book_category")
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Getter
 public class BookCategory {
+
     @Id
-    @Column(name = "book_id")
-    private Long bookId;
-    @Column(name = "category_id")
-    private Long categoryId;
+    @GeneratedValue
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "book_id")
+    private Book book;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 }
