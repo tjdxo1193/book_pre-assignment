@@ -14,4 +14,5 @@ public class ResponseBookDto {
     private Long bookId;
     private String title;
     private String author;
+    private List<Category> categories = new ArrayList<>();
 }

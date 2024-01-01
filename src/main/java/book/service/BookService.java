@@ -52,9 +52,8 @@ public class BookService {
     }
 
     private Book getBook(Long bookId) {
-        Book book = bookRepository.findById(bookId)
+        return bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + bookId));
-        return book;
     }
 
     @Transactional
@@ -79,7 +78,7 @@ public class BookService {
 
         bookCategoryRepository.saveAll(bookCategories);
 
-        return toDto(book);
+        return toDto(book, categories);
     }
 
     public ResponseBookDto toDto(Book book) {
@@ -87,6 +86,15 @@ public class BookService {
                 .bookId(book.getId())
                 .author(book.getAuthor())
                 .title(book.getTitle())
+                .build();
+    }
+
+    public ResponseBookDto toDto(Book book, List<Category> categories) {
+        return ResponseBookDto.builder()
+                .bookId(book.getId())
+                .author(book.getAuthor())
+                .title(book.getTitle())
+                .categories(categories)
                 .build();
     }
 
@@ -107,6 +115,7 @@ public class BookService {
                 .filter(categoryId -> beforeCategoryList.stream()
                         .anyMatch(bookCategory -> bookCategory.getCategory().getId().equals(categoryId)))
                 .toList();
+
 
         List<BookCategory> deleteBookCategories = beforeCategoryList.stream()
                 .filter(bookCategory -> !commonCategoryIds.contains(bookCategory.getCategory().getId()))
